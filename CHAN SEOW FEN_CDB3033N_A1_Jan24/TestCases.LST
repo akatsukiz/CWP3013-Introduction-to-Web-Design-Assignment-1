@@ -1,0 +1,476 @@
+SQL> SET ECHO ON
+SQL> SET FEEDBACK ON
+SQL> SET LINESIZE 100
+SQL> SET PAGESIZE 200
+SQL> SET SERVEROUTPUT ON
+SQL> @ c:\sql\asm_task1a
+SQL> SELECT 
+  2  	s.sno AS "Subject No", 
+  3  	UPPER(s.stitle) AS "Subject Title", 
+  4  	REPLACE(REPLACE(REPLACE(c.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+  5  	INITCAP(com.compname) AS "Component Name", 
+  6  	com.maxpoints AS Maxpoints, 
+  7  	com.weight AS Weight
+  8  FROM courses c
+  9  JOIN subject s ON s.sno = c.sno
+ 10  JOIN components com ON com.term = c.term AND com.lineno = c.lineno
+ 11  WHERE c.term = '&term' AND com.weight >= '&min_weight'
+ 12  /
+Enter value for term: f96
+Enter value for min_weight: 40
+old:SELECT 
+	s.sno AS "Subject No", 
+	UPPER(s.stitle) AS "Subject Title", 
+	REPLACE(REPLACE(REPLACE(c.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	INITCAP(com.compname) AS "Component Name", 
+	com.maxpoints AS Maxpoints, 
+	com.weight AS Weight
+FROM courses c
+JOIN subject s ON s.sno = c.sno
+JOIN components com ON com.term = c.term AND com.lineno = c.lineno
+WHERE c.term = '&term' AND com.weight >= '&min_weight'
+
+new:SELECT 
+	s.sno AS "Subject No", 
+	UPPER(s.stitle) AS "Subject Title", 
+	REPLACE(REPLACE(REPLACE(c.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	INITCAP(com.compname) AS "Component Name", 
+	com.maxpoints AS Maxpoints, 
+	com.weight AS Weight
+FROM courses c
+JOIN subject s ON s.sno = c.sno
+JOIN components com ON com.term = c.term AND com.lineno = c.lineno
+WHERE c.term = 'f96' AND com.weight >= '40'
+
+Subject No    Subject Title                    TERM       Component Name       MAXPOINTS    WEIGHT 
+_____________ ________________________________ __________ _________________ ____________ _________ 
+csc226        INTRODUCTION TO PROGRAMMING I    Fall-96    Final                      100        50 
+csc226        INTRODUCTION TO PROGRAMMING I    Fall-96    Final                      100        40 
+csc226        INTRODUCTION TO PROGRAMMING I    Fall-96    Programs                   400        40 
+
+3 rows selected. 
+
+SQL> @ c:\sql\asm_task1b 'f96' '1031'
+SQL> CREATE OR REPLACE VIEW student_course_average AS
+  2  SELECT 
+  3  	REPLACE(REPLACE(REPLACE(e.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+  4  	e.lineno AS "Line No", 
+  5  	e.sid AS "Student ID", 
+  6  	s.lname AS "Last Name", 
+  7  	s.fname AS "First Name", 
+  8  	ROUND((SUM(sc.points * com.weight)/SUM(com.weight*com.maxpoints))*100) AS "Course Average"
+  9  FROM enrolls e
+ 10  JOIN students s ON e.sid = s.sid
+ 11  JOIN scores sc ON e.term = sc.term AND e.lineno = sc.lineno AND e.sid = sc.sid
+ 12  JOIN components com ON e.term = com.term AND e.lineno = com.lineno AND sc.compname = com.compname
+ 13  WHERE e.term = '&1' AND e.lineno = '&2'
+ 14  GROUP BY e.term, e.lineno, e.sid, s.lname, s.fname
+ 15  /
+old:CREATE OR REPLACE VIEW student_course_average AS
+SELECT 
+	REPLACE(REPLACE(REPLACE(e.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	e.lineno AS "Line No", 
+	e.sid AS "Student ID", 
+	s.lname AS "Last Name", 
+	s.fname AS "First Name", 
+	ROUND((SUM(sc.points * com.weight)/SUM(com.weight*com.maxpoints))*100) AS "Course Average"
+FROM enrolls e
+JOIN students s ON e.sid = s.sid
+JOIN scores sc ON e.term = sc.term AND e.lineno = sc.lineno AND e.sid = sc.sid
+JOIN components com ON e.term = com.term AND e.lineno = com.lineno AND sc.compname = com.compname
+WHERE e.term = '&1' AND e.lineno = '&2'
+GROUP BY e.term, e.lineno, e.sid, s.lname, s.fname
+
+new:CREATE OR REPLACE VIEW student_course_average AS
+SELECT 
+	REPLACE(REPLACE(REPLACE(e.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	e.lineno AS "Line No", 
+	e.sid AS "Student ID", 
+	s.lname AS "Last Name", 
+	s.fname AS "First Name", 
+	ROUND((SUM(sc.points * com.weight)/SUM(com.weight*com.maxpoints))*100) AS "Course Average"
+FROM enrolls e
+JOIN students s ON e.sid = s.sid
+JOIN scores sc ON e.term = sc.term AND e.lineno = sc.lineno AND e.sid = sc.sid
+JOIN components com ON e.term = com.term AND e.lineno = com.lineno AND sc.compname = com.compname
+WHERE e.term = 'f96' AND e.lineno = '1031'
+GROUP BY e.term, e.lineno, e.sid, s.lname, s.fname
+
+View STUDENT_COURSE_AVERAGE created.
+
+SQL> SELECT * FROM student_course_average;
+
+TERM          Line No Student ID    Last Name     First Name       Course Average 
+__________ __________ _____________ _____________ _____________ _________________ 
+Fall-96          1031 4444          Rajshekhar    Naveen                       79 
+Fall-96          1031 2222          Corn          Sydney                       73 
+Fall-96          1031 1111          Rajshekhar    Nandita                      93 
+
+3 rows selected. 
+
+SQL> SELECT * FROM courses;
+
+TERM       LINENO SNO           A     B     C     D 
+_______ _________ _________ _____ _____ _____ _____ 
+f03          1032 csc498       95    85    65    45 
+f96          1031 csc226       90    80    65    50 
+f96          1032 csc226       90    80    65    50 
+sp97         1031 csc227       90    80    65    50 
+
+4 rows selected. 
+
+SQL> @ c:\sql\asm_task2
+SQL> CREATE OR REPLACE PROCEDURE add_course 
+  2  (c_term IN VARCHAR2, c_lineno IN NUMBER, c_sno IN VARCHAR2, 
+  3   c_A IN NUMBER, c_B IN NUMBER, c_C IN NUMBER, c_D IN NUMBER) AS
+  4  
+  5  	e_term_error EXCEPTION; --Does not follows Business Rule #1
+  6  	PRAGMA EXCEPTION_INIT(e_term_error, -10001); --associate the error code
+  7  
+  8  	e_grade_error_1 EXCEPTION; --Does not follows Business Rule #2 - A > B > C > D
+  9  	PRAGMA EXCEPTION_INIT(e_grade_error_1, -20001); --associate the error code
+ 10  
+ 11  	e_grade_error_2 EXCEPTION; --Does not follows Business Rule #2 - Value 0-100
+ 12  	PRAGMA EXCEPTION_INIT(e_grade_error_2, -20002); --associate the error code
+ 13  
+ 14  
+ 15  BEGIN
+ 16  	DBMS_OUTPUT.PUT_LINE('Attempt to insert a new course record.');
+ 17  
+ 18  	--Insert the new record
+ 19  	INSERT INTO courses VALUES(c_term, c_lineno, c_sno, c_A, c_B, c_C, c_D);
+ 20  
+ 21  	--Business Rule 1: term must be started with "f" (Fall), "sp" (Spring), "s" (Summer)
+ 22  	--And followed by 2 digits indicating year
+ 23  	IF NOT REGEXP_LIKE(c_term, '^(f|sp|s)\d{2}$') THEN
+ 24  		--raise the EXCEPTION
+ 25  		RAISE e_term_error;
+ 26  	END IF;
+ 27  
+ 28  	--Business Rule 2: Value of Grade A must bigger than Grade B (minimum gap 10 points)
+ 29  	--Same for other grades subsequently
+ 30  	--Grade values must be in the range of 0-100
+ 31  	IF (c_A<(c_B+10)) OR (c_B<(c_C+10)) OR (c_C<(c_D+10)) THEN
+ 32  		--raise the EXCEPTION
+ 33  		RAISE e_grade_error_1;
+ 34  	END IF;
+ 35  
+ 36  	IF (c_A <0 OR c_A >100) OR (c_B <0 OR c_B >100) OR (c_C <0 OR c_C >100) OR (c_D <0 OR c_D >100) THEN
+ 37  		--raise the EXCEPTION
+ 38  		RAISE e_grade_error_2;
+ 39  	END IF;
+ 40  
+ 41  	DBMS_OUTPUT.PUT_LINE('New course record added!');
+ 42  
+ 43  	COMMIT; --Save the record
+ 44  
+ 45  EXCEPTION
+ 46  
+ 47  	WHEN e_term_error THEN --Violate Business Rule
+ 48  		DBMS_OUTPUT.PUT_LINE('Attempt failed.');
+ 49  		DBMS_OUTPUT.PUT_LINE('Error code:' || SQLCODE);
+ 50  		DBMS_OUTPUT.PUT_LINE('The term format is invalid, it should started with "f"(Fall), "sp"(Spring), "s"(Summer) and followed by 2 digits for year indication. Eg:f96');
+ 51  		ROLLBACK;
+ 52  
+ 53  	WHEN e_grade_error_1 THEN --Violate Business Rule
+ 54  		DBMS_OUTPUT.PUT_LINE('Attempt failed.');
+ 55  		DBMS_OUTPUT.PUT_LINE('Error code:' || SQLCODE);
+ 56  		DBMS_OUTPUT.PUT_LINE('The value for higher grade should be more than the next grade by at least 10 points. Eg: Grade A: 90 points, Grade B: 80 points, Grade C: 70 points, Grade D: 60 points');
+ 57  		ROLLBACK;
+ 58  
+ 59  	WHEN e_grade_error_2 THEN --Violate Business Rule
+ 60  		DBMS_OUTPUT.PUT_LINE('Attempt failed.');
+ 61  		DBMS_OUTPUT.PUT_LINE('Error code:' || SQLCODE);
+ 62  		DBMS_OUTPUT.PUT_LINE('The grade values must be in the range of 0-100. Eg: Grade A: 95 points');
+ 63  		ROLLBACK;
+ 64  
+ 65  	WHEN DUP_VAL_ON_INDEX THEN --Inserting Same Record
+ 66  		DBMS_OUTPUT.PUT_LINE('Attempt failed.');
+ 67  		DBMS_OUTPUT.PUT_LINE('The record for term #' || c_term || ' and line no of '||'#' || c_lineno || ' is found in the database!');
+ 68  		DBMS_OUTPUT.PUT_LINE('Error:' || SQLCODE);
+ 69  		--DBMS_OUTPUT.PUT_LINE('Message:' || SQLERRM);
+ 70  		ROLLBACK;
+ 71  
+ 72  	--All error handlers
+ 73  	WHEN OTHERS THEN 
+ 74  		DBMS_OUTPUT.PUT_LINE('Attempt failed.');
+ 75  		DBMS_OUTPUT.PUT_LINE('Error code:' || SQLCODE);
+ 76  		DBMS_OUTPUT.PUT_LINE('Error:' || SQLERRM);
+ 77  		ROLLBACK; --unto the transaction
+ 78  END;
+ 79  /
+
+Procedure ADD_COURSE compiled
+
+SQL> @ c:\sql\asm_task2run
+SQL> ACCEPT c_term CHAR prompt 'Please enter Term (Eg:sp97): ';
+Please enter Term (Eg:sp97): f01
+SQL> ACCEPT c_lineno NUMBER prompt 'Please enter Line No (Eg:1031): ';
+Please enter Line No (Eg:1031): 1031
+SQL> ACCEPT c_sno CHAR prompt'Please enter Subject No (Eg:csc227): ';
+Please enter Subject No (Eg:csc227): csc481
+SQL> ACCEPT c_A NUMBER prompt'Please enter Grade A Values (Between 0-100): ';
+Please enter Grade A Values (Between 0-100): 80
+SQL> ACCEPT c_B NUMBER prompt'Please enter Grade B Values (Between 0-100): ';
+Please enter Grade B Values (Between 0-100): 70
+SQL> ACCEPT c_C NUMBER prompt'Please enter Grade C Values (Between 0-100): ';
+Please enter Grade C Values (Between 0-100): 60
+SQL> ACCEPT c_D NUMBER prompt'Please enter Grade D Values (Between 0-100): ';
+Please enter Grade D Values (Between 0-100): 45
+SQL> 
+SQL> BEGIN
+  2  	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+  3  END;
+  4  /
+old:BEGIN
+	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+END;
+
+new:BEGIN
+	add_course('f01', '1031', 'csc481', '80', '70', '60', '45');
+END;
+Attempt to insert a new course record.
+New course record added!
+
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM courses;
+
+TERM       LINENO SNO           A     B     C     D 
+_______ _________ _________ _____ _____ _____ _____ 
+f01          1031 csc481       80    70    60    45 
+f03          1032 csc498       95    85    65    45 
+f96          1031 csc226       90    80    65    50 
+f96          1032 csc226       90    80    65    50 
+sp97         1031 csc227       90    80    65    50 
+
+5 rows selected. 
+
+SQL> @ c:\sql\asm_task2run
+SQL> ACCEPT c_term CHAR prompt 'Please enter Term (Eg:sp97): ';
+Please enter Term (Eg:sp97): a22
+SQL> ACCEPT c_lineno NUMBER prompt 'Please enter Line No (Eg:1031): ';
+Please enter Line No (Eg:1031): 1031
+SQL> ACCEPT c_sno CHAR prompt'Please enter Subject No (Eg:csc227): ';
+Please enter Subject No (Eg:csc227): csc227
+SQL> ACCEPT c_A NUMBER prompt'Please enter Grade A Values (Between 0-100): ';
+Please enter Grade A Values (Between 0-100): 90
+SQL> ACCEPT c_B NUMBER prompt'Please enter Grade B Values (Between 0-100): ';
+Please enter Grade B Values (Between 0-100): 80
+SQL> ACCEPT c_C NUMBER prompt'Please enter Grade C Values (Between 0-100): ';
+Please enter Grade C Values (Between 0-100): 70
+SQL> ACCEPT c_D NUMBER prompt'Please enter Grade D Values (Between 0-100): ';
+Please enter Grade D Values (Between 0-100): 60
+SQL> 
+SQL> BEGIN
+  2  	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+  3  END;
+  4  /
+old:BEGIN
+	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+END;
+
+new:BEGIN
+	add_course('a22', '1031', 'csc227', '90', '80', '70', '60');
+END;
+Attempt to insert a new course record.
+Attempt failed.
+Error code:-10001
+The term format is invalid, it should started with "f"(Fall), "sp"(Spring), "s"(Summer) and followed
+by 2 digits for year indication. Eg:f96
+
+
+PL/SQL procedure successfully completed.
+
+SQL> @ c:\sql\asm_task2run
+SQL> ACCEPT c_term CHAR prompt 'Please enter Term (Eg:sp97): ';
+Please enter Term (Eg:sp97): f999
+SQL> ACCEPT c_lineno NUMBER prompt 'Please enter Line No (Eg:1031): ';
+Please enter Line No (Eg:1031): 1031
+SQL> ACCEPT c_sno CHAR prompt'Please enter Subject No (Eg:csc227): ';
+Please enter Subject No (Eg:csc227): csc227
+SQL> ACCEPT c_A NUMBER prompt'Please enter Grade A Values (Between 0-100): ';
+Please enter Grade A Values (Between 0-100): 90
+SQL> ACCEPT c_B NUMBER prompt'Please enter Grade B Values (Between 0-100): ';
+Please enter Grade B Values (Between 0-100): 80
+SQL> ACCEPT c_C NUMBER prompt'Please enter Grade C Values (Between 0-100): ';
+Please enter Grade C Values (Between 0-100): 70
+SQL> ACCEPT c_D NUMBER prompt'Please enter Grade D Values (Between 0-100): ';
+Please enter Grade D Values (Between 0-100): 60
+SQL> 
+SQL> BEGIN
+  2  	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+  3  END;
+  4  /
+old:BEGIN
+	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+END;
+
+new:BEGIN
+	add_course('f999', '1031', 'csc227', '90', '80', '70', '60');
+END;
+Attempt to insert a new course record.
+Attempt failed.
+Error code:-10001
+The term format is invalid, it should started with "f"(Fall), "sp"(Spring), "s"(Summer) and followed
+by 2 digits for year indication. Eg:f96
+
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM courses;
+
+TERM       LINENO SNO           A     B     C     D 
+_______ _________ _________ _____ _____ _____ _____ 
+f01          1031 csc481       80    70    60    45 
+f03          1032 csc498       95    85    65    45 
+f96          1031 csc226       90    80    65    50 
+f96          1032 csc226       90    80    65    50 
+sp97         1031 csc227       90    80    65    50 
+
+5 rows selected. 
+
+SQL> @ c:\sql\asm_task2run
+SQL> ACCEPT c_term CHAR prompt 'Please enter Term (Eg:sp97): ';
+Please enter Term (Eg:sp97): f23
+SQL> ACCEPT c_lineno NUMBER prompt 'Please enter Line No (Eg:1031): ';
+Please enter Line No (Eg:1031): 1031
+SQL> ACCEPT c_sno CHAR prompt'Please enter Subject No (Eg:csc227): ';
+Please enter Subject No (Eg:csc227): csc227
+SQL> ACCEPT c_A NUMBER prompt'Please enter Grade A Values (Between 0-100): ';
+Please enter Grade A Values (Between 0-100): 90
+SQL> ACCEPT c_B NUMBER prompt'Please enter Grade B Values (Between 0-100): ';
+Please enter Grade B Values (Between 0-100): 85
+SQL> ACCEPT c_C NUMBER prompt'Please enter Grade C Values (Between 0-100): ';
+Please enter Grade C Values (Between 0-100): 84
+SQL> ACCEPT c_D NUMBER prompt'Please enter Grade D Values (Between 0-100): ';
+Please enter Grade D Values (Between 0-100): 70
+SQL> 
+SQL> BEGIN
+  2  	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+  3  END;
+  4  /
+old:BEGIN
+	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+END;
+
+new:BEGIN
+	add_course('f23', '1031', 'csc227', '90', '85', '84', '70');
+END;
+Attempt to insert a new course record.
+Attempt failed.
+Error code:-20001
+The value for higher grade should be more than the next grade by at least 10 points. Eg: Grade A: 90
+points, Grade B: 80 points, Grade C: 70 points, Grade D: 60 points
+
+
+PL/SQL procedure successfully completed.
+
+SQL> @ c:\sql\asm_task2run
+SQL> ACCEPT c_term CHAR prompt 'Please enter Term (Eg:sp97): ';
+Please enter Term (Eg:sp97): f23
+SQL> ACCEPT c_lineno NUMBER prompt 'Please enter Line No (Eg:1031): ';
+Please enter Line No (Eg:1031): 1031
+SQL> ACCEPT c_sno CHAR prompt'Please enter Subject No (Eg:csc227): ';
+Please enter Subject No (Eg:csc227): csc227
+SQL> ACCEPT c_A NUMBER prompt'Please enter Grade A Values (Between 0-100): ';
+Please enter Grade A Values (Between 0-100): -1
+SQL> ACCEPT c_B NUMBER prompt'Please enter Grade B Values (Between 0-100): ';
+Please enter Grade B Values (Between 0-100): 85
+SQL> ACCEPT c_C NUMBER prompt'Please enter Grade C Values (Between 0-100): ';
+Please enter Grade C Values (Between 0-100): 84
+SQL> ACCEPT c_D NUMBER prompt'Please enter Grade D Values (Between 0-100): ';
+Please enter Grade D Values (Between 0-100): 70
+SQL> 
+SQL> BEGIN
+  2  	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+  3  END;
+  4  /
+old:BEGIN
+	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+END;
+
+new:BEGIN
+	add_course('f23', '1031', 'csc227', '-1', '85', '84', '70');
+END;
+Attempt to insert a new course record.
+Attempt failed.
+Error code:-2290
+Error:ORA-02290: check constraint (SEOWFEN.SYS_C007733) violated
+
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM courses;
+
+TERM       LINENO SNO           A     B     C     D 
+_______ _________ _________ _____ _____ _____ _____ 
+f01          1031 csc481       80    70    60    45 
+f03          1032 csc498       95    85    65    45 
+f96          1031 csc226       90    80    65    50 
+f96          1032 csc226       90    80    65    50 
+sp97         1031 csc227       90    80    65    50 
+
+5 rows selected. 
+
+SQL> SELECT * FROM courses;
+
+TERM       LINENO SNO           A     B     C     D 
+_______ _________ _________ _____ _____ _____ _____ 
+f01          1031 csc481       80    70    60    45 
+f03          1032 csc498       95    85    65    45 
+f96          1031 csc226       90    80    65    50 
+f96          1032 csc226       90    80    65    50 
+sp97         1031 csc227       90    80    65    50 
+
+5 rows selected. 
+
+SQL> @ c:\sql\asm_task2run
+SQL> ACCEPT c_term CHAR prompt 'Please enter Term (Eg:sp97): ';
+Please enter Term (Eg:sp97): sp97
+SQL> ACCEPT c_lineno NUMBER prompt 'Please enter Line No (Eg:1031): ';
+Please enter Line No (Eg:1031): 1031
+SQL> ACCEPT c_sno CHAR prompt'Please enter Subject No (Eg:csc227): ';
+Please enter Subject No (Eg:csc227): csc498
+SQL> ACCEPT c_A NUMBER prompt'Please enter Grade A Values (Between 0-100): ';
+Please enter Grade A Values (Between 0-100): 90
+SQL> ACCEPT c_B NUMBER prompt'Please enter Grade B Values (Between 0-100): ';
+Please enter Grade B Values (Between 0-100): 80
+SQL> ACCEPT c_C NUMBER prompt'Please enter Grade C Values (Between 0-100): ';
+Please enter Grade C Values (Between 0-100): 70
+SQL> ACCEPT c_D NUMBER prompt'Please enter Grade D Values (Between 0-100): ';
+Please enter Grade D Values (Between 0-100): 60
+SQL> 
+SQL> BEGIN
+  2  	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+  3  END;
+  4  /
+old:BEGIN
+	add_course('&c_term', '&c_lineno', '&c_sno', '&c_A', '&c_B', '&c_C', '&c_D');
+END;
+
+new:BEGIN
+	add_course('sp97', '1031', 'csc498', '90', '80', '70', '60');
+END;
+Attempt to insert a new course record.
+Attempt failed.
+The record for term #sp97 and line no of #1031 is found in the database!
+Error:-1
+
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM courses;
+
+TERM       LINENO SNO           A     B     C     D 
+_______ _________ _________ _____ _____ _____ _____ 
+f01          1031 csc481       80    70    60    45 
+f03          1032 csc498       95    85    65    45 
+f96          1031 csc226       90    80    65    50 
+f96          1032 csc226       90    80    65    50 
+sp97         1031 csc227       90    80    65    50 
+
+5 rows selected. 
+
+SQL> SPOOL OFF

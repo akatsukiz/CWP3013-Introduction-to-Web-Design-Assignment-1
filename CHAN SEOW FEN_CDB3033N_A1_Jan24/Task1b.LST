@@ -1,0 +1,65 @@
+SQL> SET ECHO ON
+SQL> SET FEEDBACK ON
+SQL> SET LINESIZE 100
+SQL> SET PAGESIZE 200
+SQL> SET SERVEROUTPUT ON
+SQL> @ c:\sql\asm_task1b_query 'sp97' '1031'
+SQL> @ c:\sql\asm_task1b 'sp97' '1031'
+SQL> CREATE OR REPLACE VIEW student_course_average AS
+  2  SELECT 
+  3  	REPLACE(REPLACE(REPLACE(e.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+  4  	e.lineno AS "Line No", 
+  5  	e.sid AS "Student ID", 
+  6  	s.lname AS "Last Name", 
+  7  	s.fname AS "First Name", 
+  8  	ROUND((SUM(sc.points * com.weight)/SUM(com.weight*com.maxpoints))*100) AS "Course Average"
+  9  FROM enrolls e
+ 10  JOIN students s ON e.sid = s.sid
+ 11  JOIN scores sc ON e.term = sc.term AND e.lineno = sc.lineno AND e.sid = sc.sid
+ 12  JOIN components com ON e.term = com.term AND e.lineno = com.lineno AND sc.compname = com.compname
+ 13  WHERE e.term = '&1' AND e.lineno = '&2'
+ 14  GROUP BY e.term, e.lineno, e.sid, s.lname, s.fname
+ 15  /
+old:CREATE OR REPLACE VIEW student_course_average AS
+SELECT 
+	REPLACE(REPLACE(REPLACE(e.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	e.lineno AS "Line No", 
+	e.sid AS "Student ID", 
+	s.lname AS "Last Name", 
+	s.fname AS "First Name", 
+	ROUND((SUM(sc.points * com.weight)/SUM(com.weight*com.maxpoints))*100) AS "Course Average"
+FROM enrolls e
+JOIN students s ON e.sid = s.sid
+JOIN scores sc ON e.term = sc.term AND e.lineno = sc.lineno AND e.sid = sc.sid
+JOIN components com ON e.term = com.term AND e.lineno = com.lineno AND sc.compname = com.compname
+WHERE e.term = '&1' AND e.lineno = '&2'
+GROUP BY e.term, e.lineno, e.sid, s.lname, s.fname
+
+new:CREATE OR REPLACE VIEW student_course_average AS
+SELECT 
+	REPLACE(REPLACE(REPLACE(e.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	e.lineno AS "Line No", 
+	e.sid AS "Student ID", 
+	s.lname AS "Last Name", 
+	s.fname AS "First Name", 
+	ROUND((SUM(sc.points * com.weight)/SUM(com.weight*com.maxpoints))*100) AS "Course Average"
+FROM enrolls e
+JOIN students s ON e.sid = s.sid
+JOIN scores sc ON e.term = sc.term AND e.lineno = sc.lineno AND e.sid = sc.sid
+JOIN components com ON e.term = com.term AND e.lineno = com.lineno AND sc.compname = com.compname
+WHERE e.term = 'sp97' AND e.lineno = '1031'
+GROUP BY e.term, e.lineno, e.sid, s.lname, s.fname
+
+View STUDENT_COURSE_AVERAGE created.
+
+SQL> SELECT * FROM student_course_average
+  2  /
+
+TERM            Line No Student ID    Last Name    First Name       Course Average 
+____________ __________ _____________ ____________ _____________ _________________ 
+Spring-97          1031 5555          Yam          Elad                         85 
+Spring-97          1031 6666          Herring      Lincoln                      83 
+
+2 rows selected. 
+
+SQL> SPOOL OFF

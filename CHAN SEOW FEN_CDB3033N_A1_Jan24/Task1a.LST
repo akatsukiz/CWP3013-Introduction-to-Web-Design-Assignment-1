@@ -1,0 +1,53 @@
+SQL> SET ECHO ON
+SQL> SET FEEDBACK ON
+SQL> SET LINESIZE 100
+SQL> SET PAGESIZE 200
+SQL> SET SERVEROUTPUT ON
+SQL> @ c:\sql\asm_task1a
+SQL> SELECT 
+  2  	s.sno AS "Subject No", 
+  3  	UPPER(s.stitle) AS "Subject Title", 
+  4  	REPLACE(REPLACE(REPLACE(c.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+  5  	INITCAP(com.compname) AS "Component Name", 
+  6  	com.maxpoints AS Maxpoints, 
+  7  	com.weight AS Weight
+  8  FROM courses c
+  9  JOIN subject s ON s.sno = c.sno
+ 10  JOIN components com ON com.term = c.term AND com.lineno = c.lineno
+ 11  WHERE c.term = '&term' AND com.weight >= '&min_weight'
+ 12  /
+Enter value for term: f96
+Enter value for min_weight: 40
+old:SELECT 
+	s.sno AS "Subject No", 
+	UPPER(s.stitle) AS "Subject Title", 
+	REPLACE(REPLACE(REPLACE(c.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	INITCAP(com.compname) AS "Component Name", 
+	com.maxpoints AS Maxpoints, 
+	com.weight AS Weight
+FROM courses c
+JOIN subject s ON s.sno = c.sno
+JOIN components com ON com.term = c.term AND com.lineno = c.lineno
+WHERE c.term = '&term' AND com.weight >= '&min_weight'
+
+new:SELECT 
+	s.sno AS "Subject No", 
+	UPPER(s.stitle) AS "Subject Title", 
+	REPLACE(REPLACE(REPLACE(c.term, 'f', 'Fall-'), 'sp', 'Spring-'), 's', 'Summer-') AS Term, 
+	INITCAP(com.compname) AS "Component Name", 
+	com.maxpoints AS Maxpoints, 
+	com.weight AS Weight
+FROM courses c
+JOIN subject s ON s.sno = c.sno
+JOIN components com ON com.term = c.term AND com.lineno = c.lineno
+WHERE c.term = 'f96' AND com.weight >= '40'
+
+Subject No    Subject Title                    TERM       Component Name       MAXPOINTS    WEIGHT 
+_____________ ________________________________ __________ _________________ ____________ _________ 
+csc226        INTRODUCTION TO PROGRAMMING I    Fall-96    Final                      100        50 
+csc226        INTRODUCTION TO PROGRAMMING I    Fall-96    Final                      100        40 
+csc226        INTRODUCTION TO PROGRAMMING I    Fall-96    Programs                   400        40 
+
+3 rows selected. 
+
+SQL> SPOOL OFF
